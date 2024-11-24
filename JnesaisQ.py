@@ -25,14 +25,13 @@ __status__ = "Beta"
 
 @contextmanager
 def jnesaisq_compare(
-        JSON_query_clause
+        json_query_clause
 ):
     jnesaiq_instance = JnesaisQ(
-        JSON_query_clause
+        json_query_clause
     )
     yield_fun = jnesaiq_instance.is_this_a_full_match
     yield yield_fun
-    yield_fun = None
 
 
 class JnesaisQ:
@@ -42,9 +41,7 @@ class JnesaisQ:
     to JSON inputs to see if and where matches or mismatches occur.
     '''
 
-
-
-    def __init__(self, JSON_query_clause):
+    def __init__(self, json_query_clause):
         self._json_query_finding = namedtuple(
             'json_query_finding',
             'current_json_path, actual_finding_value'
@@ -55,116 +52,120 @@ class JnesaisQ:
         )
         self._JSON_KEY_MISSING = 'JSON_key_not_found'
         self._JSON_VALUE_MISMATCH = 'JSON_value_mismatch'
-        self.JSON_query_clause = JSON_query_clause
+        self.JSON_query_clause = json_query_clause
         self._AND_match = 'AND_match'
         self._AND_mismatch = 'AND_mismatch'
         self._OR_match_mismatch = 'OR_match_mismatch'
 
-    def compare_verbose(self, JSON_to_query, JSON_query_clause=None,
+    def compare_verbose(self, json_to_query, json_query_clause=None,
                         *,
                         debug_mode=False,
-                        current_JSON_path='',
-                        JnesaisQ_matches=None,
-                        JnesaisQ_mismatches=None):
+                        current_json_path='',
+                        jnesais_q_matches=None,
+                        jnesais_q_mismatches=None):
         '''
         compare_json_to_query_clause
-        :param JSON_to_query: This is an input JSON which you want to query
-        :param JSON_query_clause: This is a clause in JSON format for
+        :param json_to_query: This is an input JSON which you want to query
+        :param json_query_clause: This is a clause in JSON format for
         the keys you want to query with values in regex
         :param debug_mode: Debug mode can be on or off, deprecated
-        :param current_JSON_path: This is an internal only variable
+        :param current_json_path: This is an internal only variable
         which tracks the current JSON path for reporting findings
-        :param JnesaisQ_matches: stores results of the matches
+        :param jnesais_q_matches: stores results of the matches
         identified by the query
-        :param JnesaisQ_mismatches: stores results of the mismatches identified
+        :param jnesais_q_mismatches: stores results of the mismatches identified
         by the query
         :return: This returns findings based on the JSON_to_query,
         the JSON_query_clause, and the match_mode
         '''
-        if not JSON_query_clause:
-            JSON_query_clause = self.JSON_query_clause
-        if JnesaisQ_matches is None:
-            JnesaisQ_matches = []
-        if JnesaisQ_mismatches is None:
-            JnesaisQ_mismatches = []
+        if not json_query_clause:
+            json_query_clause = self.JSON_query_clause
+        if jnesais_q_matches is None:
+            jnesais_q_matches = []
+        if jnesais_q_mismatches is None:
+            jnesais_q_mismatches = []
         if debug_mode:
             logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-        if not isinstance(JSON_query_clause,dict) and  not isinstance(JSON_query_clause,list):
-                if re.match(JSON_query_clause, JSON_to_query):
-                    JnesaisQ_matches.append(
-                        self._json_query_finding(
-                            current_JSON_path,
-                            JSON_to_query
-                        )
+        if not isinstance(json_query_clause, dict) and not isinstance(json_query_clause, list):
+            if re.match(json_query_clause, json_to_query):
+                jnesais_q_matches.append(
+                    self._json_query_finding(
+                        current_json_path,
+                        json_to_query
                     )
-                else:
-                    JnesaisQ_mismatches.append(
-                        self._json_query_finding(
-                            current_JSON_path,
-                            self._JSON_VALUE_MISMATCH
-                        )
+                )
+            else:
+                jnesais_q_mismatches.append(
+                    self._json_query_finding(
+                        current_json_path,
+                        self._JSON_VALUE_MISMATCH
                     )
+                )
         else:    
-            for format_key in JSON_query_clause.keys():
-                current_json_path = current_JSON_path + '/' + format_key
+            for format_key in json_query_clause.keys():
+                current_json_path = current_json_path + '/' + format_key
                 try:
-                    JSON_to_query_key_value = JSON_to_query[format_key]
+                    json_to_query_key_value = json_to_query[format_key]
                 except:
                     # key not found in JSON to query, so it is a mismatch
-                    JnesaisQ_mismatches.append(
+                    jnesais_q_mismatches.append(
                         self._json_query_finding(
                             current_json_path,
                             self._JSON_KEY_MISSING
                         )
                     )
                     continue
-                JSON_query_key_value = JSON_query_clause[format_key]
+                json_query_key_value = json_query_clause[format_key]
                 # if the format value which is being compared with
                 # the test value is itself a clause, recurse
-                if (isinstance(JSON_query_key_value, list) and isinstance(JSON_to_query_key_value, list)) or isinstance(JSON_query_key_value, dict):
-                    if isinstance(JSON_query_key_value, list):
+                if (
+                        isinstance(json_query_key_value, list)
+                        and
+                        isinstance(json_to_query_key_value, list)
+                ) or isinstance(json_query_key_value, dict):
+                    if isinstance(json_query_key_value, list):
                         _ = self.compare_verbose(
-                        JSON_to_query_key_value[0],
-                        JSON_query_clause=JSON_query_key_value[0],
-                        current_JSON_path=current_json_path,
-                        JnesaisQ_matches=JnesaisQ_matches,
-                        JnesaisQ_mismatches=JnesaisQ_mismatches,
-                        debug_mode=debug_mode
+                            json_to_query_key_value[0],
+                            json_query_clause=json_query_key_value[0],
+                            current_json_path=current_json_path,
+                            jnesais_q_matches=jnesais_q_matches,
+                            jnesais_q_mismatches=jnesais_q_mismatches,
+                            debug_mode=debug_mode
                         )
                     else:
                         _ = self.compare_verbose(
-                        JSON_to_query_key_value,
-                        JSON_query_clause=JSON_query_key_value,
-                        current_JSON_path=current_json_path,
-                        JnesaisQ_matches=JnesaisQ_matches,
-                        JnesaisQ_mismatches=JnesaisQ_mismatches,
-                        debug_mode=debug_mode
+                            json_to_query_key_value,
+                            json_query_clause=json_query_key_value,
+                            current_json_path=current_json_path,
+                            jnesais_q_matches=jnesais_q_matches,
+                            jnesais_q_mismatches=jnesais_q_mismatches,
+                            debug_mode=debug_mode
                         )
-                elif isinstance(JSON_to_query_key_value, list) and not isinstance(JSON_query_key_value, list):
-                    JnesaisQ_mismatches.append(
+                elif isinstance(json_to_query_key_value, list) and not isinstance(json_query_key_value, list):
+                    jnesais_q_mismatches.append(
                             self._json_query_finding(
                                 current_json_path,
                                 self._JSON_VALUE_MISMATCH
                             )
                         )
                 else:
-                    if re.match(JSON_query_key_value, JSON_to_query_key_value):
-                        JnesaisQ_matches.append(
+                    if re.match(json_query_key_value, json_to_query_key_value):
+                        jnesais_q_matches.append(
                             self._json_query_finding(
                                 current_json_path,
-                                JSON_to_query_key_value
+                                json_to_query_key_value
                             )
                         )
                     else:
-                        JnesaisQ_mismatches.append(
+                        jnesais_q_mismatches.append(
                             self._json_query_finding(
                                 current_json_path,
                                 self._JSON_VALUE_MISMATCH
                             )
                         )
         return self._json_query_final_results(
-            JnesaisQ_mismatches,
-            JnesaisQ_matches
+            jnesais_q_mismatches,
+            jnesais_q_matches
         )
 
     def overall_result(self, match_tuple):
@@ -190,30 +191,30 @@ class JnesaisQ:
             retval.append(self._AND_mismatch)
         return retval
 
-    def compare(self, JSON_to_query):
+    def compare(self, json_to_query):
         return self.overall_result(
             self.compare_verbose(
-                JSON_to_query=JSON_to_query
+                json_to_query=json_to_query
             )
         )
 
-    def is_this_a_full_match(self, JSON_to_query):
-        return JSON_to_query if self.overall_result(
+    def is_this_a_full_match(self, json_to_query):
+        return json_to_query if self.overall_result(
             self.compare_verbose(
-                JSON_to_query=JSON_to_query
+                json_to_query=json_to_query
             )) == [self._AND_match] else None
 
-    def list_of_compares(self, list_of_JSON_to_query):
+    def list_of_compares(self, list_of_json_to_query):
         '''
         list of compares
         outputs comparisons using the current search setup for a list of JSON
-        :param list_of_JSON_to_query: the list of JSON to apply the query to
+        :param list_of_json_to_query: the list of JSON to apply the query to
         :return: list of matching JSON
         '''
         output_list_of_dicts = []
-        for JSON_to_query in list_of_JSON_to_query:
+        for JSON_to_query in list_of_json_to_query:
             if self.overall_result(
-                    self.compare_verbose(JSON_to_query=JSON_to_query)
+                    self.compare_verbose(json_to_query=JSON_to_query)
             ) in ([self._OR_match_mismatch], [self._AND_match]):
                 output_list_of_dicts.append(JSON_to_query)
         return output_list_of_dicts
