@@ -35,11 +35,11 @@ def jnesaisq_compare(
 
 
 class JnesaisQ:
-    '''
+    """
     JnesaisQ
     Allows you to create a search term in JSON, and then apply that search term
     to JSON inputs to see if and where matches or mismatches occur.
-    '''
+    """
 
     def __init__(self, json_query_clause):
         self._json_query_finding = namedtuple(
@@ -63,7 +63,7 @@ class JnesaisQ:
                         current_json_path='',
                         jnesais_q_matches=None,
                         jnesais_q_mismatches=None):
-        '''
+        """
         compare_json_to_query_clause
         :param json_to_query: This is an input JSON which you want to query
         :param json_query_clause: This is a clause in JSON format for
@@ -77,7 +77,7 @@ class JnesaisQ:
         by the query
         :return: This returns findings based on the JSON_to_query,
         the JSON_query_clause, and the match_mode
-        '''
+        """
         if not json_query_clause:
             json_query_clause = self.JSON_query_clause
         if jnesais_q_matches is None:
@@ -106,7 +106,7 @@ class JnesaisQ:
                 current_json_path = current_json_path + '/' + format_key
                 try:
                     json_to_query_key_value = json_to_query[format_key]
-                except:
+                except KeyError:
                     # key not found in JSON to query, so it is a mismatch
                     jnesais_q_mismatches.append(
                         self._json_query_finding(
@@ -169,13 +169,13 @@ class JnesaisQ:
         )
 
     def overall_result(self, match_tuple):
-        '''
+        """
         overall_result
         Returns a diagnosis of the JSON format match attempt:
         AND_match, OR_match_mismatch, AND_mismatch
         :param match_tuple: this is the output of JnesaisQ.compare
         :return: an overall result
-        '''
+        """
         retval = []
         if match_tuple.json_query_mismatches == [] \
                 and match_tuple.json_query_matches == []:
@@ -205,12 +205,12 @@ class JnesaisQ:
             )) == [self._AND_match] else None
 
     def list_of_compares(self, list_of_json_to_query):
-        '''
+        """
         list of compares
         outputs comparisons using the current search setup for a list of JSON
         :param list_of_json_to_query: the list of JSON to apply the query to
         :return: list of matching JSON
-        '''
+        """
         output_list_of_dicts = []
         for JSON_to_query in list_of_json_to_query:
             if self.overall_result(
